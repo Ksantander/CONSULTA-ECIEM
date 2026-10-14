@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ECIEM · Ideas para el futuro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+/* =========================================================
+   CONFIGURACIÓN: pegue aquí el enlace CSV publicado de la planilla
+   (Archivo → Compartir → Publicar en la web → hoja de respuestas → CSV)
+   Si queda vacío, el tablero muestra datos de ejemplo.
+   ========================================================= */
+</style>
+<script>
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/1oZWAjhMgAI0mrFFRoUnCijYBiX5uBs48z_ePdM7xJhA/pub?output=csv";               // ← pegar enlace .../pub?gid=...&single=true&output=csv
+  const FORM_URL = "https://forms.gle/f674LwBrX9U4oTK3A";              // ← pegar enlace del formulario (botón "Proponer idea")
+  const REFRESCO_MIN = 5;           // minutos entre actualizaciones automáticas
+</script>
+<style>
+:root{
+  --bg:#ffffff; --bg2:#f6f8fa; --fg:#1f2328; --muted:#59636e; --border:#d1d9e0;
+  --head:#24292f; --headfg:#ffffff; --accent:#0969da; --open:#1a7f37; --done:#8250df;
+  --h0:#eff2f5; --h1:#aceebb; --h2:#4ac26b; --h3:#2da44e; --h4:#116329;
+  --d-doc:#0969da; --d-vcm:#1a7f37; --d-ges:#8250df; --d-inv:#bf3989; --d-ec:#bc4c00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1117; --bg2:#151b23; --fg:#f0f6fc; --muted:#9198a1; --border:#3d444d;
+    --head:#010409; --accent:#4493f8; --open:#3fb950; --done:#ab7df8;
+    --h0:#151b23; --h1:#033a16; --h2:#196c2e; --h3:#2ea043; --h4:#56d364;
+    --d-doc:#4493f8; --d-vcm:#3fb950; --d-ges:#ab7df8; --d-inv:#f778ba; --d-ec:#f0883e;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif}
+a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+header.top{background:var(--head);color:var(--headfg);padding:14px 16px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.top .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:0}
+.logo{width:32px;height:32px;border-radius:50%;background:#fff;color:#24292f;display:grid;place-items:center;font-weight:700;font-size:13px}
+.repo{font-size:18px}.repo b{font-weight:600}
+.top .sp{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--bg2);color:var(--fg);border-radius:6px;padding:5px 12px;font-weight:500;font-size:14px;cursor:pointer}
+.btn.primary{background:#1f883d;border-color:rgba(31,35,40,.15);color:#fff}
+.btn.primary:hover{background:#1c8139;text-decoration:none}
+.sub{border-bottom:1px solid var(--border);background:var(--bg)}
+.sub .wrap{display:flex;gap:4px;overflow-x:auto}
+.tab{padding:12px 10px;border-bottom:2px solid transparent;color:var(--fg);white-space:nowrap}
+.tab.on{border-color:#fd8c73;font-weight:600}
+.count{background:var(--bg2);border:1px solid var(--border);border-radius:2em;padding:0 7px;font-size:12px;margin-left:4px}
+.banner{background:#fff8c5;color:#4d2d00;border:1px solid #d4a72c66;border-radius:6px;padding:8px 12px;margin:16px 0 0}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .banner{background:#bb800926;color:#e3b341;border-color:#bb800966}}
+main{padding:20px 0 48px}
+.grid{display:grid;grid-template-columns:1fr 296px;gap:24px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.card{border:1px solid var(--border);border-radius:6px;background:var(--bg)}
+.card h3{margin:0;font-size:14px;font-weight:600;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg2);border-radius:6px 6px 0 0}
+.pad{padding:12px 16px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{border:1px solid var(--border);border-radius:6px;padding:12px 14px}
+.stat .n{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat .l{color:var(--muted);font-size:12px}
+.heat{overflow-x:auto;padding:12px 16px}
+.heat svg{display:block}
+.heat .legend{display:flex;align-items:center;gap:4px;justify-content:flex-end;color:var(--muted);font-size:12px;margin-top:6px}
+.heat .legend i{width:10px;height:10px;border-radius:2px;display:inline-block;outline:1px solid rgba(27,31,35,.06);outline-offset:-1px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 12px}
+.filters input{flex:1;min-width:180px;border:1px solid var(--border);background:var(--bg2);color:var(--fg);border-radius:6px;padding:5px 12px;font-size:14px}
+.filters select{border:1px solid var(--border);background:var(--bg2);color:var(--fg);border-radius:6px;padding:5px 8px;font-size:14px}
+.labels{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.lab{display:inline-flex;align-items:center;border-radius:2em;padding:0 8px;font-size:12px;font-weight:500;line-height:20px;border:1px solid transparent;white-space:nowrap}
+.chip{cursor:pointer} .labels.filtering .chip:not(.on){opacity:.45} .chip.on{box-shadow:0 0 0 2px var(--bg),0 0 0 3px currentColor}
+.list-head{display:flex;gap:16px;padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border);border-radius:6px 6px 0 0;font-size:14px;flex-wrap:wrap}
+.list-head .s{cursor:pointer;color:var(--muted)} .list-head .s.on{color:var(--fg);font-weight:600}
+.issue{display:flex;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+.issue:last-child{border-bottom:0}
+.issue:hover{background:var(--bg2)}
+.issue .ic{flex:none;margin-top:3px}
+.issue .t{font-weight:600;font-size:15px;color:var(--fg);margin-right:6px;overflow-wrap:anywhere}
+.issue .meta{color:var(--muted);font-size:12px;margin-top:2px}
+.issue .body{display:none;margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);white-space:pre-wrap;overflow-wrap:anywhere}
+.issue.open .body{display:block}
+.prio{display:inline-flex;gap:2px;vertical-align:middle;margin-left:6px}
+.prio i{width:6px;height:10px;border-radius:1px;background:var(--border)}
+.prio i.f{background:#cf222e}
+.empty{padding:40px 16px;text-align:center;color:var(--muted)}
+.side .card{margin-bottom:16px}
+.bar{margin:8px 0}
+.bar .row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.bar .row span:last-child{font-variant-numeric:tabular-nums;color:var(--muted)}
+.bar .trk{height:8px;border-radius:4px;background:var(--bg2);overflow:hidden}
+.bar .fill{height:100%;border-radius:4px}
+.stack{display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px;margin:6px 0 10px}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:24px 16px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="logo">UCN</div>
+  <div class="repo">ECIEM / <b>ideas-para-el-futuro</b></div>
+  <span class="sp"></span>
+  <a class="btn primary" id="btnForm" target="_blank" rel="noopener">+ Proponer una idea</a>
+</div></header>
+<nav class="sub"><div class="wrap" id="tabs"></div></nav>
+
+<div class="wrap">
+  <div class="banner" id="demo" hidden>Mostrando <b>datos de ejemplo</b>. Configure <code>CSV_URL</code> en este archivo para conectar las respuestas reales.</div>
+  <main>
+    <div class="stats" id="stats"></div>
+    <div class="card"><h3 id="heatTitle">Actividad de la consulta</h3><div class="heat" id="heat"></div></div>
+    <div class="grid" style="margin-top:16px">
+      <section>
+        <div class="filters">
+          <input id="q" type="search" placeholder="Buscar ideas…" aria-label="Buscar">
+          <select id="fHor" aria-label="Horizonte"><option value="">Horizonte: todos</option></select>
+          <select id="fTipo" aria-label="Tipo"><option value="">Tipo: todos</option></select>
+          <select id="sort" aria-label="Orden"><option value="new">Más recientes</option><option value="old">Más antiguas</option><option value="prio">Mayor prioridad</option></select>
+        </div>
+        <div class="labels" id="chips"></div>
+        <div class="card">
+          <div class="list-head" id="stateTabs"></div>
+          <div id="list"></div>
+        </div>
+      </section>
+      <aside class="side">
+        <div class="card"><h3>Por dimensión</h3><div class="pad" id="byDim"></div></div>
+        <div class="card"><h3>Por horizonte</h3><div class="pad" id="byHor"></div></div>
+        <div class="card"><h3>Por tipo de aporte</h3><div class="pad" id="byTipo"></div></div>
+        <div class="card"><h3>Acerca de</h3><div class="pad" style="color:var(--muted);font-size:13px">
+          Consulta abierta a las y los académicos de la Escuela de Ciencias Empresariales, UCN Sede Coquimbo, sobre lo que ECIEM debe construir a mediano y largo plazo, más allá de quien la dirija.
+          <div style="margin-top:8px" id="upd"></div></div></div>
+      </aside>
+    </div>
+  </main>
+</div>
+<footer>Escuela de Ciencias Empresariales · Universidad Católica del Norte · Sede Coquimbo</footer>
+
+<script>
+const DIMS = [
+  {k:"Docencia", c:"--d-doc"},
+  {k:"Vinculación con el Medio", c:"--d-vcm"},
+  {k:"Gestión", c:"--d-ges"},
+  {k:"Investigación", c:"--d-inv"},
+  {k:"Educación Continua", c:"--d-ec"},
+];
+const HOR = ["Corto plazo (hasta 1 año)","Mediano plazo (2 a 3 años)","Largo plazo (4 años o más)"];
+const TIPOS = ["Opinión / diagnóstico","Recomendación","Proyección"];
+const ESTADOS_CERRADOS = ["implementada"];
+const state = {rows:[], dims:new Set(), q:"", hor:"", tipo:"", sort:"new", st:"open"};
+
+const $ = id => document.getElementById(id);
+const cssv = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const norm = s => (s||"").toString().normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();
+function el(tag, attrs={}, ...kids){
+  const e=document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs)){ if(k==="style") e.style.cssText=v; else if(k.startsWith("on")) e.addEventListener(k.slice(2),v); else e.setAttribute(k,v); }
+  for(const k of kids){ if(k==null) continue; e.append(k.nodeType?k:document.createTextNode(k)); }
+  return e;
+}
+function dimOf(s){ const n=norm(s); return DIMS.find(d=>norm(d.k)===n) || DIMS.find(d=>n.includes(norm(d.k).split(" ")[0])) || {k:s||"Sin dimensión", c:"--muted"}; }
+function labelEl(text, colorVar, extraClass=""){
+  const c=cssv(colorVar)||"#888";
+  return el("span",{class:"lab "+extraClass, style:`color:${c};background:${c}1f;border-color:${c}66`}, text);
+}
+let FECHA_MDY = false; // planillas en inglés ("Timestamp") usan mes/día/año
+function parseFecha(s){
+  if(!s) return null;
+  const m = String(s).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ ,]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(m){ let a=+m[1], b=+m[2]; let dia=a, mes=b; if((FECHA_MDY && b<=31 && a<=12) || b>12){ dia=b; mes=a; } return new Date(+m[3], mes-1, dia, +(m[4]||0), +(m[5]||0), +(m[6]||0)); }
+  const d=new Date(s); return isNaN(d)?null:d;
+}
+function hace(d){
+  if(!d) return "";
+  const s=(Date.now()-d)/1000, rtf=new Intl.RelativeTimeFormat("es",{numeric:"auto"});
+  if(s<3600) return rtf.format(-Math.max(1,Math.round(s/60)),"minute");
+  if(s<86400) return rtf.format(-Math.round(s/3600),"hour");
+  if(s<86400*30) return rtf.format(-Math.round(s/86400),"day");
+  return d.toLocaleDateString("es-CL",{day:"numeric",month:"short",year:"numeric"});
+}
+
+/* ---------- Carga de datos ---------- */
+function mapRows(objs){
+  if(!objs.length) return [];
+  const heads = Object.keys(objs[0]);
+  const find = (...keys) => heads.find(h => keys.some(k => norm(h).startsWith(k)));
+  const H = {
+    fecha: find("marca temporal","timestamp","fecha"),
+    nombre: find("nombre"),
+    dim: find("dimension"),
+    tipo: find("tipo"),
+    hor: find("horizonte"),
+    tit: find("titulo"),
+    desc: find("descripcion"),
+    prio: find("prioridad"),
+    est: find("estado"),
+  };
+  FECHA_MDY = !!H.fecha && norm(H.fecha).startsWith("timestamp");
+  return objs.map((o,i)=>({
+    n: i+1,
+    fecha: parseFecha(o[H.fecha]),
+    nombre: (o[H.nombre]||"").trim() || "Anónimo",
+    dim: (o[H.dim]||"").trim(),
+    tipo: (o[H.tipo]||"").trim(),
+    hor: (o[H.hor]||"").trim(),
+    tit: (o[H.tit]||"").trim() || "(sin título)",
+    desc: (o[H.desc]||"").trim(),
+    prio: Math.max(0,Math.min(5,parseInt(o[H.prio])||0)),
+    est: (o[H.est]||"").trim() || "Abierta",
+  })).filter(r => r.dim && norm(r.est)!=="oculta");
+}
+function cargar(){
+  if(!CSV_URL){ $("demo").hidden=false; state.rows=demo(); render(); return; }
+  Papa.parse(CSV_URL + (CSV_URL.includes("?")?"&":"?") + "t=" + Date.now(), {
+    download:true, header:true, skipEmptyLines:true,
+    complete: r => { state.rows = mapRows(r.data); $("upd").textContent = "Actualizado: " + new Date().toLocaleString("es-CL"); render(); },
+    error: () => { $("upd").textContent = "No se pudo leer la planilla. Revise CSV_URL."; }
+  });
+}
+
+/* ---------- Render ---------- */
+function filtradas(ignoreState=false){
+  const q=norm(state.q);
+  return state.rows.filter(r=>{
+    if(state.dims.size && !state.dims.has(dimOf(r.dim).k)) return false;
+    if(state.hor && r.hor!==state.hor) return false;
+    if(state.tipo && r.tipo!==state.tipo) return false;
+    if(q && !norm(r.tit+" "+r.desc+" "+r.nombre).includes(q)) return false;
+    if(!ignoreState){ const closed=ESTADOS_CERRADOS.includes(norm(r.est)); if(state.st==="open"&&closed) return false; if(state.st==="closed"&&!closed) return false; }
+    return true;
+  });
+}
+function render(){
+  const rows=state.rows;
+  // tabs
+  $("tabs").replaceChildren(
+    el("a",{class:"tab on"},"Ideas",el("span",{class:"count"},String(rows.length))),
+    ...DIMS.map(d=>el("a",{class:"tab",href:"#",onclick:e=>{e.preventDefault();state.dims=new Set([d.k]);render();}},d.k,el("span",{class:"count"},String(rows.filter(r=>dimOf(r.dim).k===d.k).length))))
+  );
+  // stats
+  const nombres=new Set(rows.filter(r=>r.nombre!=="Anónimo").map(r=>norm(r.nombre)));
+  const semana=rows.filter(r=>r.fecha && Date.now()-r.fecha<7*86400000).length;
+  const prioProm=rows.length?(rows.reduce((a,r)=>a+r.prio,0)/rows.length).toFixed(1):"–";
+  $("stats").replaceChildren(...[
+    [rows.length,"ideas recibidas"],[semana,"en los últimos 7 días"],[nombres.size,"participantes identificados"],[prioProm,"prioridad promedio (1–5)"]
+  ].map(([n,l])=>el("div",{class:"stat"},el("div",{class:"n"},String(n)),el("div",{class:"l"},l))));
+  heatmap(rows);
+  // chips
+  $("chips").classList.toggle("filtering",state.dims.size>0);
+  $("chips").replaceChildren(...DIMS.map(d=>{
+    const c=labelEl(d.k,d.c,"chip"+(state.dims.has(d.k)?" on":""));
+    c.onclick=()=>{state.dims.has(d.k)?state.dims.delete(d.k):state.dims.add(d.k);render();};
+    return c;
+  }), ...(state.dims.size?[el("a",{href:"#",style:"font-size:12px;align-self:center",onclick:e=>{e.preventDefault();state.dims.clear();render();}},"Limpiar filtro")]:[]));
+  // state tabs
+  const base=filtradas(true), nOpen=base.filter(r=>!ESTADOS_CERRADOS.includes(norm(r.est))).length;
+  const st=(k,txt,n)=>el("span",{class:"s"+(state.st===k?" on":""),onclick:()=>{state.st=k;render();}},`${txt} (${n})`);
+  $("stateTabs").replaceChildren(st("open","○ Abiertas",nOpen),st("closed","✓ Implementadas",base.length-nOpen),st("all","Todas",base.length));
+  // list
+  let list=filtradas();
+  list.sort((a,b)=> state.sort==="prio" ? (b.prio-a.prio)||((b.fecha||0)-(a.fecha||0)) : state.sort==="old" ? (a.fecha||0)-(b.fecha||0) : (b.fecha||0)-(a.fecha||0));
+  $("list").replaceChildren(...(list.length?list.map(issue):[el("div",{class:"empty"},rows.length?"No hay ideas con estos filtros.":"Aún no hay ideas. ¡Sé la primera persona en proponer una!")]));
+  // side
+  bars("byDim",DIMS.map(d=>[d.k,rows.filter(r=>dimOf(r.dim).k===d.k).length,cssv(d.c)]));
+  bars("byHor",HOR.map((h,i)=>[h,rows.filter(r=>r.hor===h).length,cssv(["--h2","--h3","--h4"][i])]));
+  bars("byTipo",TIPOS.map((t,i)=>[t,rows.filter(r=>r.tipo===t).length,cssv(["--d-doc","--d-ges","--d-ec"][i])]));
+}
+function issue(r){
+  const d=dimOf(r.dim), closed=ESTADOS_CERRADOS.includes(norm(r.est));
+  const icon=el("span",{class:"ic"}); icon.innerHTML = closed
+    ? `<svg width="16" height="16" viewBox="0 0 16 16" fill="${cssv('--done')}"><path d="M11.28 6.78a.75.75 0 0 0-1.06-1.06L7.25 8.69 5.78 7.22a.75.75 0 0 0-1.06 1.06l2 2a.75.75 0 0 0 1.06 0l3.5-3.5ZM16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-1.5 0a6.5 6.5 0 1 0-13 0 6.5 6.5 0 0 0 13 0Z"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 16 16" fill="${cssv('--open')}"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"/></svg>`;
+  const prio=el("span",{class:"prio",title:`Prioridad ${r.prio}/5`},...[1,2,3,4,5].map(i=>el("i",{class:i<=r.prio?"f":""})));
+  const estLab = norm(r.est)!=="abierta" ? labelEl(r.est,"--done") : null;
+  const node=el("div",{class:"issue"},icon,el("div",{style:"flex:1;min-width:0"},
+    el("div",{},el("span",{class:"t"},r.tit),labelEl(d.k,d.c)," ",r.hor?labelEl(r.hor.split(" (")[0],"--muted"):null," ",r.tipo?labelEl(r.tipo,"--muted"):null," ",estLab,prio),
+    el("div",{class:"meta"},`#${r.n} propuesta por ${r.nombre} ${hace(r.fecha)}`),
+    el("div",{class:"body"},r.desc||"(sin descripción)")
+  ));
+  node.onclick=()=>node.classList.toggle("open");
+  return node;
+}
+function bars(id,data){
+  const tot=data.reduce((a,x)=>a+x[1],0)||1, max=Math.max(1,...data.map(x=>x[1]));
+  $(id).replaceChildren(...data.map(([k,n,c])=>el("div",{class:"bar"},
+    el("div",{class:"row"},el("span",{},k),el("span",{},`${n} · ${Math.round(n/tot*100)}%`)),
+    el("div",{class:"trk"},el("div",{class:"fill",style:`width:${n/max*100}%;background:${c}`}))
+  )));
+}
+function heatmap(rows){
+  const day=86400000, hoy=new Date(); hoy.setHours(0,0,0,0);
+  const fechas=rows.map(r=>r.fecha).filter(Boolean);
+  const semanas=Math.max(16, Math.min(53, fechas.length? Math.ceil((hoy-Math.min(...fechas))/day/7)+2 : 16));
+  const inicio=new Date(hoy - ((semanas-1)*7 + hoy.getDay())*day);
+  const cnt={}; fechas.forEach(f=>{const k=new Date(f).setHours(0,0,0,0);cnt[k]=(cnt[k]||0)+1;});
+  const lv=n=>n===0?0:n<2?1:n<4?2:n<7?3:4, col=["--h0","--h1","--h2","--h3","--h4"].map(cssv);
+  const S=11,G=3,L=28,T=16, W=L+semanas*(S+G), Hh=T+7*(S+G);
+  let s=`<svg width="${W}" height="${Hh}" role="img" aria-label="Ideas recibidas por día" font-size="10" fill="${cssv('--muted')}">`;
+  ["","Lun","","Mié","","Vie",""].forEach((t,i)=>{ if(t) s+=`<text x="0" y="${T+i*(S+G)+9}">${t}</text>`; });
+  let mesPrev=-1, wPrev=-9;
+  for(let w=0;w<semanas;w++){
+    for(let d=0;d<7;d++){
+      const f=new Date(+inicio+(w*7+d)*day); if(f>hoy) continue;
+      if(d===0 && f.getMonth()!==mesPrev){ mesPrev=f.getMonth(); if(w-wPrev>=3){ wPrev=w; s+=`<text x="${L+w*(S+G)}" y="10">${f.toLocaleDateString("es-CL",{month:"short"})}</text>`; } }
+      const n=cnt[+f]||0;
+      s+=`<rect x="${L+w*(S+G)}" y="${T+d*(S+G)}" width="${S}" height="${S}" rx="2" fill="${col[lv(n)]}"><title>${n} idea${n===1?"":"s"} · ${f.toLocaleDateString("es-CL",{weekday:"short",day:"numeric",month:"short"})}</title></rect>`;
+    }
+  }
+  s+="</svg>";
+  $("heatTitle").textContent=`${rows.length} ideas en la consulta`;
+  $("heat").innerHTML=s;
+  $("heat").append(el("div",{class:"legend"},"Menos",...col.map(c=>el("i",{style:`background:${c}`})),"Más"));
+}
+
+/* ---------- Datos de ejemplo (solo si CSV_URL está vacío) ---------- */
+function demo(){
+  const ej=[
+    ["Docencia","Recomendación","Mediano plazo (2 a 3 años)","Aprendizaje basado en desafíos con empresas de la región","Que cada carrera tenga al menos un curso por año con un desafío real levantado por una empresa o servicio público.",4,"","Abierta"],
+    ["Investigación","Proyección","Largo plazo (4 años o más)","Semillero de investigación con estudiantes de pregrado","Grupo estable que vincule tesis de pregrado y magíster con las líneas de la Escuela.",5,"","Priorizada"],
+    ["Vinculación con el Medio","Recomendación","Corto plazo (hasta 1 año)","Calendario anual de actividades con egresados","Encuentros semestrales con egresados para retroalimentar el currículo.",3,"","Abierta"],
+    ["Gestión","Opinión / diagnóstico","Corto plazo (hasta 1 año)","Simplificar la coordinación de horarios","Hoy la asignación de salas y horarios se resuelve muy tarde cada semestre.",4,"","En curso"],
+    ["Educación Continua","Proyección","Mediano plazo (2 a 3 años)","Diplomados modulares que convaliden con el magíster","Rutas formativas que permitan avanzar de diplomado a magíster profesional.",4,"","Abierta"],
+    ["Docencia","Opinión / diagnóstico","Mediano plazo (2 a 3 años)","Uso de IA generativa en evaluación","Acordar criterios comunes sobre el uso de IA en trabajos y exámenes.",3,"","Implementada"],
+    ["Investigación","Recomendación","Mediano plazo (2 a 3 años)","Fondo interno para apoyar postulaciones Fondecyt","Horas protegidas y apoyo metodológico para quienes postulan por primera vez.",5,"","Abierta"],
+    ["Vinculación con el Medio","Proyección","Largo plazo (4 años o más)","Centro de estudios regionales de la Escuela","Articular el observatorio y los proyectos con empresas en una unidad visible.",4,"","Abierta"],
+  ];
+  const ahora=Date.now();
+  return ej.map((e,i)=>({n:i+1,fecha:new Date(ahora-(i*3.3+Math.random()*2)*86400000),nombre:e[6]||"Anónimo",dim:e[0],tipo:e[1],hor:e[2],tit:e[3],desc:e[4],prio:e[5],est:e[7]}));
+}
+
+/* ---------- Eventos ---------- */
+HOR.forEach(h=>$("fHor").append(el("option",{value:h},h)));
+TIPOS.forEach(t=>$("fTipo").append(el("option",{value:t},t)));
+$("q").oninput=e=>{state.q=e.target.value;render();};
+$("fHor").onchange=e=>{state.hor=e.target.value;render();};
+$("fTipo").onchange=e=>{state.tipo=e.target.value;render();};
+$("sort").onchange=e=>{state.sort=e.target.value;render();};
+if(FORM_URL){ $("btnForm").href=FORM_URL; } else { $("btnForm").href="#"; $("btnForm").onclick=e=>{e.preventDefault();alert("Configure FORM_URL en index.html");}; }
+cargar();
+setInterval(cargar, REFRESCO_MIN*60000);
+</script>
+</body>
+</html>
